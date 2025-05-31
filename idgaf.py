@@ -2,10 +2,8 @@ import os
 from os.path import join
 import customtkinter as ui
 
-class View(ui):
-    def __init__(self, control):
-        super().__init__()
-        self.control= control
+class Model:
+    def __init__(self):
         pass
 
 class Control: 
@@ -14,8 +12,10 @@ class Control:
         self.model = model
         pass
 
-class Model:
-    def __init__(self):
+class View(ui): # display and pass to controller only
+    def __init__(self, control):
+        super().__init__()
+        self.control= control
         pass
 
     
