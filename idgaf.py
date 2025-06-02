@@ -27,7 +27,6 @@ class Model:
                                    'floyd_steinberg',       # 6
                                    'sierra2_4a',            # 7 Highest size
                                    'none']                  # 8 ugly
-        
 
         ### GIF SETTINGS ###
         self.fps = 8
@@ -112,8 +111,9 @@ class Control:
 
     def generate_gif(self):
         model.run_ffmpeg_cmdstr()
-        
         pass
+
+    
 
 class View(ui.CTk): # display and pass to controller only
     def __init__(self, control):
@@ -121,12 +121,10 @@ class View(ui.CTk): # display and pass to controller only
         self.control = control
         ui.set_appearance_mode("dark")
         ui.set_default_color_theme("green")
-        self.geometry("300x700")
+        self.geometry("300x675")
         self.title("I don't gif a f***")
         # self.iconbitmap(os.path.join('icons','punch.ico'))
         self.resizable(False, False)
-
-
 
         # fps
         self.fps_area = self.area(300,50,0,10,self)
@@ -169,17 +167,14 @@ class View(ui.CTk): # display and pass to controller only
         # Set output
         self.output_text = self.menu_text("Select save location:",20,415,self)
         self.output_text.configure(font = ('Roboto Bold', 16))
-        self.output_area = self.area(300, 500, 0, 435, self)
-        self.output_input = self.input(260, 40, 20, 10, self.output_area)
-        self.output_btn = self.btn(260, 40, "Set Output Folder", 20, 60, self.control.set_save_location, self.output_area)
-        self.makegif_btn = self.btn(260, 80, "Generate Gif(s)!", 20, 125, self.control.generate_gif, self.output_area)
-        
-        # self.find_btn = self.btn(200, 50, "find file", 30, 30, 
-        #                          self.control.find_file_location, self)
-        # self.save_btn = self.btn(200, 50, "Set save Location", 30, 100, 
-        #                          self.control.set_save_location, self)
-        # self.gen_btn = self.btn(200, 50, "Generate gif", 30, 170, 
-        #                         self.control.generate_gif, self)
+        self.output_area = self.area(600, 500, 0, 440, self)
+        self.output_input = self.input(260, 35, 20, 10, self.output_area)
+        self.output_btn = self.btn(260, 40, "Set Output Folder", 20, 55, self.control.set_save_location, self.output_area)
+        self.makegif_btn = self.btn(260, 80, "Generate Gif(s)!", 20, 115, self.control.generate_gif, self.output_area)
+
+        self.overviewlabel = self.menu_text("Show Overview ◨", 170, 203, self.output_area)
+        self.overviewlabel.configure(font=('Roboto', 14), text_color="#7D7D7D", cursor="hand2")
+        self.overviewlabel.bind("<Button-1>", self.overview_toggle)
         
 
     def btn(self, set_width, set_height, set_text, set_x, set_y,set_command,set_root):
@@ -231,6 +226,17 @@ class View(ui.CTk): # display and pass to controller only
                                  dynamic_resizing=False)
         menu.place(x=set_x, y=set_y)
         return menu
+    
+    def overview_toggle(self, event):
+        current = self.geometry().split("+")[0]
+        if current == "300x675":
+            self.geometry("600x675")
+            self.overviewlabel.configure(text='Hide Overview ◧')
+            self.overviewlabel.place(x=475, y=203)
+        else:
+            self.geometry("300x675")
+            self.overviewlabel.configure(text='Show Overview ◨')
+            self.overviewlabel.place(x=170, y=203)
 
                     
 model = Model()
