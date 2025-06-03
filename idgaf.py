@@ -29,11 +29,11 @@ class Model:
                                    'none']                  # 8 ugly
 
         ### GIF SETTINGS ###
-        self.fps = 8
-        self.scalediv = 2
-        self.max_colours = self.colours_list[1]
-        self.dither_method = self.dither_method_list[8]
-        self.stats_mode = self.stats_mode_list[1] #testing this one
+        self.fps = 12
+        self.scalediv = 1
+        self.max_colours = self.colours_list[3]
+        self.dither_method = self.dither_method_list[2]
+        self.stats_mode = self.stats_mode_list[1] 
         self.diff_mode = self.diff_mode_list[0]
         self.loops = 0
 
@@ -169,12 +169,22 @@ class View(ui.CTk): # display and pass to controller only
         self.output_text.configure(font = ('Roboto Bold', 16))
         self.output_area = self.area(600, 500, 0, 440, self)
         self.output_input = self.input(260, 35, 20, 10, self.output_area)
+        self.output_input.configure(justify='left')
         self.output_btn = self.btn(260, 40, "Set Output Folder", 20, 55, self.control.set_save_location, self.output_area)
         self.makegif_btn = self.btn(260, 80, "Generate Gif(s)!", 20, 115, self.control.generate_gif, self.output_area)
 
+        # Overview 
         self.overviewlabel = self.menu_text("Show Overview ◨", 170, 203, self.output_area)
         self.overviewlabel.configure(font=('Roboto', 14), text_color="#7D7D7D", cursor="hand2")
         self.overviewlabel.bind("<Button-1>", self.overview_toggle)
+
+        # Set overview panel
+        self.overview_area = self.area(280,618,300,18,self)
+        self.overview_area.configure(fg_color='grey9', corner_radius=7)
+        self.overview_text('Options on the left are ordered in importance ' \
+                           'in respect to reducing file size.\n\n Hover over ' \
+                           'each option to see more information here.',
+                           self.overview_area)
         
 
     def btn(self, set_width, set_height, set_text, set_x, set_y,set_command,set_root):
@@ -214,6 +224,15 @@ class View(ui.CTk): # display and pass to controller only
                             text=menu_text,
                             font=("Roboto", 16))
         label.place(x=set_x,y=set_y)
+        return label
+    
+    def overview_text(self, help_text, set_root):
+        label = ui.CTkLabel(set_root,
+                            text=help_text,
+                            font=("Roboto", 18),
+                            text_color='grey50',
+                            wraplength=230)
+        label.place(relx=0.5, rely=0.5, anchor="center")
         return label
     
     def drop_down(self, set_width, set_height, set_x, set_y, opt_list, set_root):
