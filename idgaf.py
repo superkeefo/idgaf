@@ -131,38 +131,67 @@ class View(ui.CTk): # display and pass to controller only
         self.fps_text  = self.menu_text("FPS:",20,12,self.fps_area)
         self.fps_input = self.input(125,35,155,7.5,self.fps_area)
         self.fps_input.insert(0,'30') # will need to change this when preferences are saved/called
+        self.fps_area.bind('<Enter>', self.fps_help)
+        self.fps_text.bind('<Enter>', self.fps_help)
+        self.fps_input.bind('<Enter>', self.fps_help)
+        self.fps_area.bind('<Leave>', self.overview_help)
 
         # scale
         self.scale_area = self.area(300,50,0,60,self)
         self.scale_text  = self.menu_text("Scale:",20,12,self.scale_area)
         self.scale_dd = self.drop_down(125,35,155,7.5, self.control.model.scale_list, self.scale_area)
+        self.scale_area.bind('<Enter>', self.scale_help)
+        self.scale_text.bind('<Enter>', self.scale_help)
+        self.scale_dd.bind('<Enter>', self.scale_help)
+        self.scale_area.bind('<Leave>', self.overview_help)
+
 
         # max colours
         self.max_area = self.area(300,50,0,110,self)
         self.max_text  = self.menu_text("Max colours:",20,12,self.max_area)
         self.max_dd = self.drop_down(125,35,155,7.5, self.control.model.colours_list, self.max_area)
+        self.max_area.bind('<Enter>', self.max_help)
+        self.max_text.bind('<Enter>', self.max_help)
+        self.max_dd.bind('<Enter>', self.max_help)
+        self.max_area.bind('<Leave>', self.overview_help)
 
         # dither method
         self.dith_area = self.area(300,50,0,160,self)
         self.dith_text  = self.menu_text("Dither method:",20,12,self.dith_area)
         self.dith_dd = self.drop_down(125,35,155,7.5, self.control.model.dither_method_list, self.dith_area)
+        self.dith_area.bind('<Enter>', self.dith_help)
+        self.dith_text.bind('<Enter>', self.dith_help)
+        self.dith_dd.bind('<Enter>', self.dith_help)
+        self.dith_area.bind('<Leave>', self.overview_help)
 
         # optimize preference
         self.opt_area = self.area(300,50,0,210,self)
         self.opt_text  = self.menu_text("Optimize for:",20,12,self.opt_area)
         self.opt_dd = self.drop_down(125,35,155,7.5, self.control.model.optimize_list, self.opt_area)
+        self.opt_area.bind('<Enter>', self.opt_help)
+        self.opt_text.bind('<Enter>', self.opt_help)
+        self.opt_dd.bind('<Enter>', self.opt_help)
+        self.opt_area.bind('<Leave>', self.overview_help)
 
         # loop preference
         self.loop_area = self.area(300,50,0,260,self)
         self.loop_text  = self.menu_text("Loop:",20,12,self.loop_area)
         self.loop_dd = self.drop_down(125,35,155,7.5, self.control.model.loop_list, self.loop_area)
+        self.loop_area.bind('<Enter>', self.loop_help)
+        self.loop_text.bind('<Enter>', self.loop_help)
+        self.loop_dd.bind('<Enter>', self.loop_help)
+        self.loop_area.bind('<Leave>', self.overview_help)
 
         # file input
         self.input_text = self.menu_text("Select input:",20,320,self)
         self.input_text.configure(font = ('Roboto Bold', 16))
         self.input_area = self.area(300, 60, 0, 350, self)
         self.single_file_btn = self.btn(125,40,"Single File",20,10, self.control.find_file_location ,self.input_area)
+        self.single_file_btn.bind('<Enter>', self.single_help)
+        self.single_file_btn.bind('<Leave>', self.overview_help)
         self.folder_btn = self.btn(125,40,"Folder",155,10,None,self.input_area)
+        self.folder_btn.bind('<Enter>', self.folder_help)
+        self.folder_btn.bind('<Leave>', self.overview_help)
 
         # Set output
         self.output_text = self.menu_text("Select save location:",20,415,self)
@@ -172,6 +201,11 @@ class View(ui.CTk): # display and pass to controller only
         self.output_input.configure(justify='left')
         self.output_btn = self.btn(260, 40, "Set Output Folder", 20, 55, self.control.set_save_location, self.output_area)
         self.makegif_btn = self.btn(260, 80, "Generate Gif(s)!", 20, 115, self.control.generate_gif, self.output_area)
+        self.output_area.bind('<Enter>', self.output_help)
+        self.output_text.bind('<Enter>', self.output_help)
+        self.output_input.bind('<Enter>', self.output_help)
+        self.output_btn.bind('<Enter>', self.output_help)
+        self.output_area.bind('<Leave>', self.overview_help)
 
         # Overview 
         self.overviewlabel = self.menu_text("Show Overview ◨", 170, 203, self.output_area)
@@ -181,12 +215,9 @@ class View(ui.CTk): # display and pass to controller only
         # Set overview panel
         self.overview_area = self.area(280,618,300,18,self)
         self.overview_area.configure(fg_color='grey9', corner_radius=7)
-        self.overview_text('Options on the left are ordered in importance ' \
-                           'in respect to reducing file size.\n\n Hover over ' \
-                           'each option to see more information here.',
-                           self.overview_area)
+        self.overview_helptext = self.overview_text('Placeholder', self.overview_area)
+        self.overview_help(None)
         
-
     def btn(self, set_width, set_height, set_text, set_x, set_y,set_command,set_root):
         button = ui.CTkButton(set_root, 
                               width=set_width, 
@@ -256,7 +287,43 @@ class View(ui.CTk): # display and pass to controller only
             self.geometry("300x675")
             self.overviewlabel.configure(text='Show Overview ◨')
             self.overviewlabel.place(x=170, y=203)
+    
+    def overview_help(self, event):
+        self.overview_helptext.configure(text='Overview:\n\nOptions on the left are ordered in importance ' \
+                           'in respect to reducing file size.\n\n Hover over ' \
+                           'each option to see more information here.')
 
+    def fps_help(self, event):
+        self.overview_helptext.configure(text='FPS:')
+
+    def scale_help(self, event):
+        self.overview_helptext.configure(text='Scale:')
+
+    def max_help(self, event):
+        self.overview_helptext.configure(text='Max colours:')
+    
+    def dith_help(self, event):
+        self.overview_helptext.configure(text='Dither method:')
+
+    def opt_help(self, event):
+        self.overview_helptext.configure(text='Optimize for:')
+    
+    def loop_help(self, event):
+        self.overview_helptext.configure(text='Loop:')
+
+    def single_help(self, event):
+        self.overview_helptext.configure(text='Single File:')
+    
+    def folder_help(self, event):
+        self.overview_helptext.configure(text='Folder:')
+    
+    def output_help(self, event):
+        self.overview_helptext.configure(text='Output:')
+
+    def overviewtext_help(self, event):
+        self.overview_helptext.configure(text='Overview:')
+    
+    
                     
 model = Model()
 control = Control(None, model) 
