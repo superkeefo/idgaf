@@ -37,8 +37,6 @@ class Model:
         self.diff_mode = self.diff_mode_list[0]
         self.loops = 0
 
-        ### OUTPUT NAME ###
-
     def set_input_file(self):
         input_file = ui.filedialog.askopenfilename()
         self.input_file = input_file
@@ -78,7 +76,6 @@ class Model:
     def concatenate_cmdstr(self):
         # add if to choose single or directory
         self.concatenate_singlefile()
-        
         pass
 
     def run_ffmpeg_cmdstr(self):
@@ -90,9 +87,22 @@ class Model:
     def dithername_output(self):
         if self.dither_method.startswith('bayer:bayer_scale='):
             scale = self.dither_method.split('=')[1]
-            self.dithername = (f'bayer{scale}')
+            self.dithername = (f'Bayer{scale}')
         else:
             self.dithername = self.dither_method
+
+    def rename_ditherlist(self):
+        renamed = []
+        for method in self.dither_method_list:
+            if method.startswith('bayer:bayer_scale='):
+                scale = method.split('=')[1]
+                renamed.append(f'Bayer {scale}')
+            else:
+                renamed.append(method.capitalize())
+                
+        return renamed
+        
+       
 
 class Control: 
     def __init__(self, view, model):
@@ -113,9 +123,8 @@ class Control:
         model.run_ffmpeg_cmdstr()
         pass
 
-    
 
-class View(ui.CTk): # display and pass to controller only
+class View(ui.CTk): 
     def __init__(self, control):
         super().__init__()
         self.control = control
@@ -145,7 +154,6 @@ class View(ui.CTk): # display and pass to controller only
         self.scale_dd.bind('<Enter>', self.scale_help)
         self.scale_area.bind('<Leave>', self.overview_help)
 
-
         # max colours
         self.max_area = self.area(300,50,0,110,self)
         self.max_text  = self.menu_text("Max colours:",20,12,self.max_area)
@@ -158,7 +166,7 @@ class View(ui.CTk): # display and pass to controller only
         # dither method
         self.dith_area = self.area(300,50,0,160,self)
         self.dith_text  = self.menu_text("Dither method:",20,12,self.dith_area)
-        self.dith_dd = self.drop_down(125,35,155,7.5, self.control.model.dither_method_list, self.dith_area)
+        self.dith_dd = self.drop_down(125,35,155,7.5, self.control.model.rename_ditherlist(), self.dith_area)
         self.dith_area.bind('<Enter>', self.dith_help)
         self.dith_text.bind('<Enter>', self.dith_help)
         self.dith_dd.bind('<Enter>', self.dith_help)
@@ -201,6 +209,7 @@ class View(ui.CTk): # display and pass to controller only
         self.output_input.configure(justify='left')
         self.output_btn = self.btn(260, 40, "Set Output Folder", 20, 55, self.control.set_save_location, self.output_area)
         self.makegif_btn = self.btn(260, 80, "Generate Gif(s)!", 20, 115, self.control.generate_gif, self.output_area)
+        self.makegif_btn.configure(fg_color="#DBDBDB", text_color='black', hover_color="#FFFFFF")
         self.output_area.bind('<Enter>', self.output_help)
         self.output_text.bind('<Enter>', self.output_help)
         self.output_input.bind('<Enter>', self.output_help)
@@ -223,8 +232,10 @@ class View(ui.CTk): # display and pass to controller only
                               width=set_width, 
                               height= set_height, 
                               text=set_text, 
-                              text_color='#000000',
+                              text_color='grey70',
                               font=("Roboto Bold", 16),
+                              fg_color='grey3',
+                              hover_color='grey20',
                               command=set_command)
         button.place(x=set_x, y=set_y)
         return button
@@ -250,10 +261,9 @@ class View(ui.CTk): # display and pass to controller only
     
     def menu_text(self, menu_text, set_x, set_y, set_root):
         label = ui.CTkLabel(set_root,
-                            # width=set_width,
-                            # height=set_height,
                             text=menu_text,
-                            font=("Roboto", 16))
+                            font=("Roboto", 16),
+                            text_color='grey60')
         label.place(x=set_x,y=set_y)
         return label
     
@@ -271,8 +281,11 @@ class View(ui.CTk): # display and pass to controller only
                                  width = set_width, 
                                  height = set_height,
                                  values = [str(item) for item in opt_list],
-                                 font=("Roboto Bold", 16),
-                                 text_color="#000000",
+                                 font=("Roboto", 16),
+                                 text_color="grey70",
+                                 fg_color='grey7',
+                                 button_color='grey3',
+                                 button_hover_color='grey20',
                                  dynamic_resizing=False)
         menu.place(x=set_x, y=set_y)
         return menu
@@ -289,42 +302,51 @@ class View(ui.CTk): # display and pass to controller only
             self.overviewlabel.place(x=170, y=203)
     
     def overview_help(self, event):
-        self.overview_helptext.configure(text='Overview:\n\nOptions on the left are ordered in importance ' \
-                           'in respect to reducing file size.\n\n Hover over ' \
-                           'each option to see more information here.')
+        self.overview_helptext.configure(text=
+        'Overview:\n\nOptions on the left are ordered in importance ' \
+        'in respect to reducing file size.\n\n Hover over ' \
+        'each option to see more information here.')
 
     def fps_help(self, event):
-        self.overview_helptext.configure(text='FPS:')
+        self.overview_helptext.configure(text=
+        'FPS:')
 
     def scale_help(self, event):
-        self.overview_helptext.configure(text='Scale:')
+        self.overview_helptext.configure(text=
+        'Scale:')
 
     def max_help(self, event):
-        self.overview_helptext.configure(text='Max colours:')
+        self.overview_helptext.configure(text=
+        'Max colours:')
     
     def dith_help(self, event):
-        self.overview_helptext.configure(text='Dither method:')
+        self.overview_helptext.configure(text=
+        'Dither method:')
 
     def opt_help(self, event):
-        self.overview_helptext.configure(text='Optimize for:')
+        self.overview_helptext.configure(text=
+        'Optimize for:')
     
     def loop_help(self, event):
-        self.overview_helptext.configure(text='Loop:')
+        self.overview_helptext.configure(text=
+        'Loop:')
 
     def single_help(self, event):
-        self.overview_helptext.configure(text='Single File:')
+        self.overview_helptext.configure(text=
+        'Single File:')
     
     def folder_help(self, event):
-        self.overview_helptext.configure(text='Folder:')
+        self.overview_helptext.configure(text=
+        'Folder:')
     
     def output_help(self, event):
-        self.overview_helptext.configure(text='Output:')
+        self.overview_helptext.configure(text=
+        'Output:')
 
     def overviewtext_help(self, event):
-        self.overview_helptext.configure(text='Overview:')
-    
-    
-                    
+        self.overview_helptext.configure(text=
+        'Overview:')
+        
 model = Model()
 control = Control(None, model) 
 view = View(control)             
