@@ -5,11 +5,14 @@ class Model:
     def __init__(self):
         self.troubleshoot = True
         self.input_dir = None
-        self.input_file = 'C:/Users/iamke/CODE/idgaf/testfiles/input/Giftest1_prores422_16bpc_srgb.mov'
-        self.output_dir = 'C:/Users/iamke/CODE/idgaf/testfiles/output'
+        self.input_dir_files = None
+        self.input_file = None
+        self.output_dir = None
         self.ff_cmdstr = None
         self.dithername = None
-        self.prefix = "Howabout"
+        self.single = False
+        self.multi = False
+        self.prefix = "Placeholder"
 
         ### GIF SETTING OPTIONS ###
         self.loop_list = ['Yes','No']
@@ -37,13 +40,72 @@ class Model:
         self.diff_mode = self.diff_mode_list[0]
         self.loops = 0
 
+    def convert_menu_scale(self, menu_scale):
+        value = float(menu_scale.strip('%'))
+        if value == 0:
+            raise ValueError("Percentage cannot be zero.")
+        return 100.0 / value
+    
+    def convert_menu_dither(self, menu_dither):
+        if menu_dither == 'Bayer 1':
+            self.dither_method = self.dither_method_list[0]
+        elif menu_dither == 'Bayer 2':
+            self.dither_method = self.dither_method_list[1]
+        elif menu_dither == 'Bayer 3':
+            self.dither_method = self.dither_method_list[2]
+        elif menu_dither == 'Bayer 4':
+            self.dither_method = self.dither_method_list[3]
+        elif menu_dither == 'Bayer 5':
+            self.dither_method = self.dither_method_list[4]
+        elif menu_dither == 'Sierra2':
+            self.dither_method = self.dither_method_list[5]
+        elif menu_dither == 'Floyd_steinberg':
+            self.dither_method = self.dither_method_list[6]
+        elif menu_dither == 'Sierra2_4a':
+            self.dither_method = self.dither_method_list[7]
+        elif menu_dither == 'None':
+            self.dither_method = self.dither_method_list[8]            
+        pass
+
+    def optimize_from_menu(self, optimize):
+        if optimize == 'Animation':
+            self.stats_mode = self.stats_mode_list[1]
+            self.diff_mode = self.diff_mode_list[0]
+        elif optimize == 'Video':
+            self.stats_mode = self.stats_mode_list[0]
+            self.diff_mode = self.diff_mode_list[1]
+
+    def convert_menu_loops(self, loops):
+        if loops == 'Yes':
+            self.loops = 0
+        elif loops == 'No':
+            self.loops = 1    
+
+    def settings_from_menu(self, fps, scale, colours, dither, optimize, loops):
+        self.fps = fps 
+        self.scalediv = self.convert_menu_scale(scale)
+        self.max_colours = colours
+        self.convert_menu_dither(dither)
+        self.optimize_from_menu(optimize)
+        self.convert_menu_loops(loops)
+
     def set_input_file(self):
         input_file = ui.filedialog.askopenfilename()
         self.input_file = input_file
+        self.input_dir = None
+        self.input_dir_files = None
 
     def set_input_dir(self):
         input_dir = ui.filedialog.askdirectory()
         self.input_dir = input_dir
+        self.input_dir_files = self.list_input_files()
+        self.input_file = None
+
+    def list_input_files(self):
+        if not self.input_dir:
+            return []
+        return [f for f in os.listdir(self.input_dir)
+                if f.lower().endswith(('.mov', '.mp4'))]
 
     def set_output_dir(self):
         output_dir = ui.filedialog.askdirectory()
@@ -52,9 +114,8 @@ class Model:
     def set_output_filename(self, prefix):
         if self.troubleshoot:
             self.dithername_output()
-            self.output_filename = (f'{prefix}_{self.fps}fps_divby{self.scalediv}_'
-                                    f'{self.max_colours}max_{self.dithername}_'
-                                    f'{self.stats_mode}_{self.diff_mode}.gif')
+            self.output_filename = (f'{prefix}_{self.fps}f'
+                                    f'{self.max_colours}c{self.dithername}.gif')
         else:
             self.output_filename = self.prefix # Need to decide on output name overwrite etc
 
@@ -99,10 +160,8 @@ class Model:
                 renamed.append(f'Bayer {scale}')
             else:
                 renamed.append(method.capitalize())
-                
         return renamed
-        
-       
+
 
 class Control: 
     def __init__(self, view, model):
@@ -116,10 +175,18 @@ class Control:
 
     def set_save_location(self):
         model.set_output_dir()
-        print(f'the output directory is located at {model.output_dir}')
-        pass
+        self.view.output_input.delete(0,'end')
+        self.view.output_input.insert(0, self.model.output_dir)
+        self.view.output_input.xview('end')
 
     def generate_gif(self):
+        model.settings_from_menu(fps=self.view.fps_input.get(),
+                                 scale=self.view.scale_dd.get(),
+                                 colours=self.view.max_dd.get(),
+                                 dither=self.view.dith_dd.get(),
+                                 optimize=self.view.opt_dd.get(),
+                                 loops=self.view.loop_dd.get())
+                                 
         model.run_ffmpeg_cmdstr()
         pass
 
