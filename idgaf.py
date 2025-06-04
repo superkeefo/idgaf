@@ -1,4 +1,6 @@
 import os
+import sys
+import subprocess
 import customtkinter as ui
 
 class Model:
@@ -65,7 +67,6 @@ class Model:
             self.dither_method = self.dither_method_list[7]
         elif menu_dither == 'None':
             self.dither_method = self.dither_method_list[8]            
-        pass
 
     def optimize_from_menu(self, optimize):
         if optimize == 'Animation':
@@ -124,9 +125,9 @@ class Model:
             self.output_filename = (f'{prefix}_{self.fps}f'
                                     f'{self.max_colours}c{self.dithername}.gif')
         else:
-            self.output_filename = self.prefix # Need to decide on output name overwrite etc
+            self.output_filename = self.prefix
 
-    def concatenate_singlefile(self, file):
+    def concatenate_cmdstr(self, file):
         self.set_output_filename(self.prefix)
         self.ff_cmdstr = (f'ffmpeg -i {file} ' 
                           f'-vf "fps={self.fps},scale=iw/{self.scalediv}:ih/{self.scalediv}:flags=lanczos,'
@@ -136,22 +137,12 @@ class Model:
                           f'-loop {self.loops} '
                           f'{self.output_dir}/{self.output_filename} -y')
         print(f'string = {self.ff_cmdstr}')
-        pass
-
-    def concetenate_wholedir(self):
-        pass
-
-    def concatenate_cmdstr(self, file):
-        # add if to choose single or directory
-        self.concatenate_singlefile(file)
-        pass
 
     def run_ffmpeg_cmdstr(self, file):
         self.set_prefix_from_path(file)
         self.concatenate_cmdstr(file)
         os.system(self.ff_cmdstr)
         print(f'generating gif')
-        pass
 
     def dithername_output(self):
         if self.dither_method.startswith('bayer:bayer_scale='):
@@ -169,6 +160,17 @@ class Model:
             else:
                 renamed.append(method.capitalize())
         return renamed
+    
+    def open_output_folder(self):
+        path = self.output_dir
+        if not path or not os.path.exists(path):
+            return
+        if sys.platform.startswith('win'):
+            os.startfile(path)
+        elif sys.platform.startswith('darwin'):
+            subprocess.Popen(['open', path])
+        else:
+            subprocess.Popen(['xdg-open', path])
 
 
 class Control: 
@@ -186,7 +188,6 @@ class Control:
         self.view.folder_btn.configure(fg_color='#DBDBDB',text_color='grey3')
         self.view.single_file_btn.configure(fg_color='grey3',text_color='grey70')
 
-
     def set_save_location(self):
         self.model.set_output_dir()
         self.view.output_input.delete(0,'end')
@@ -202,43 +203,29 @@ class Control:
                                  loops=self.view.loop_dd.get(),
                                  output=self.view.output_input.get())
         
-        # if self.model.input_file and self.model.output_dir:                        
-        #     model.run_ffmpeg_cmdstr(self.model.input_file)
-        # elif self.model.input_dir_files and self.model.output_dir:
-        #     for file in self.model.input_dir_files:
-        #         model.run_ffmpeg_cmdstr(file)
-        # self.view.flash_green()
-
-            # Check output directory
         if not self.model.output_dir or not os.path.exists(self.model.output_dir):
-            print("Output directory does not exist!")
             self.view.flash_red()
             return
-
-        # Check single file mode
         if self.model.input_file:
             if not os.path.exists(self.model.input_file):
-                print(f"Input file {self.model.input_file} does not exist!")
                 self.view.flash_red()
                 return
             self.model.run_ffmpeg_cmdstr(self.model.input_file)
-        # Check directory mode
         elif self.model.input_dir_files:
             if len(self.model.input_dir_files) == 0:
-                print("No input files found in the selected directory!")
                 self.view.flash_red()
                 return
             for file in self.model.input_dir_files:
                 if not os.path.exists(file):
-                    print(f"Input file {file} does not exist!")
                     continue
                 self.model.run_ffmpeg_cmdstr(file)
         else:
-            print("No input file or directory selected!")
             self.view.flash_red()
             return
-
+        
+        self.model.open_output_folder()
         self.view.flash_green()
+
 
 
 
@@ -257,7 +244,7 @@ class View(ui.CTk):
         self.fps_area = self.area(300,50,0,10,self)
         self.fps_text  = self.menu_text("FPS:",20,12,self.fps_area)
         self.fps_input = self.input(125,35,155,7.5,self.fps_area)
-        self.fps_input.insert(0,'30') # will need to change this when preferences are saved/called
+        self.fps_input.insert(0,'30') # will need to change this if I end up saving settings
         self.fps_area.bind('<Enter>', self.fps_help)
         self.fps_text.bind('<Enter>', self.fps_help)
         self.fps_input.bind('<Enter>', self.fps_help)
@@ -431,49 +418,65 @@ class View(ui.CTk):
     
     def overview_help(self, event):
         self.overview_helptext.configure(text=
-        'Overview:\n\nOptions on the left are ordered in importance ' \
-        'in respect to reducing file size.\n\n Hover over ' \
-        'each option to see more information here.')
+        'Overview:\n\nThe options on the left are arranged from top ' \
+        'to bottom based on their typical impact on reducing file size.\n\n ' \
+        'Hover over any option to see more details here.')
 
     def fps_help(self, event):
         self.overview_helptext.configure(text=
-        'FPS:')
+        'FPS:\n\nReducing FPS is one of the most effective ways to reduce file size,' \
+        '\n\nJust keep in mind that lowering it too much can ' \
+        'make motion appear choppy.')
 
     def scale_help(self, event):
         self.overview_helptext.configure(text=
-        'Scale:')
+        'Scale:\n\nLowering the scale can often reduce file size even more than adjusting FPS. ' \
+        'However, we’re often aiming for specific dimensions. \n\nThe Scale option is useful ' \
+        'for scaling down from a larger video output size when needed.')
 
     def max_help(self, event):
         self.overview_helptext.configure(text=
-        'Max colours:')
+        'Max Colours:\n\nReducing colours can significantly shrink file size by ' \
+        'simplifying the image. \n\nHowever, cutting too many colours may cause ' \
+        'noticeable banding or loss of detail.')
     
     def dith_help(self, event):
         self.overview_helptext.configure(text=
-        'Dither method:')
+        'Dither method:\n\nDithering blends pixels of different colours to ' \
+        'simulate more colour depth, Important when you have limited colours ' \
+        'available such as gifs. \n\nBayer 1-5 are your go to for animations, ' \
+        '1 being the highest file size and smoothest, 5 being almost unusable!' \
+        '\n\nThe "Sierra" and "Flyod Steinberg" methods are worth using for ' \
+        'footage quality, and "None" is useful for very simple animations ' \
+        'with very low colour detail needed.')
 
     def opt_help(self, event):
         self.overview_helptext.configure(text=
-        'Optimize for:')
+        'Optimize for:\n\n Optimize for settings refer to multiple options ' \
+        'which dont have a significant impact beyond minimal optimization ' \
+        'for either animations or video footage.')
     
     def loop_help(self, event):
         self.overview_helptext.configure(text=
-        'Loop:')
+        'Loop:\n\n Set whether the gif loops or not, this shouldnt effect ' \
+        'file size much if at all')
 
     def single_help(self, event):
         self.overview_helptext.configure(text=
-        'Single File:')
+        'Single File:\n\n This button is for when you want to convert ' \
+        'a single ".mp4" or ".mov" file.')
     
     def folder_help(self, event):
         self.overview_helptext.configure(text=
-        'Folder:')
+        'Folder:\n\n This button is for when you want to convert multiple ' \
+        'files, it will convert any file with the extensions ".mp4" or ".mov" in the folder.')
     
     def output_help(self, event):
         self.overview_helptext.configure(text=
-        'Output:')
+        'Output:\n\n You can enter the output location manually throught the ' \
+        'input or click the "Set Output Folder" button.')
 
-    def overviewtext_help(self, event):
-        self.overview_helptext.configure(text=
-        'Overview:')
+
         
 model = Model()
 control = Control(None, model) 
