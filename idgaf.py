@@ -81,13 +81,19 @@ class Model:
         elif loops == 'No':
             self.loops = 1    
 
-    def settings_from_menu(self, fps, scale, colours, dither, optimize, loops):
+    def settings_from_menu(self, fps, scale, colours, dither, optimize, loops, output):
         self.fps = fps 
         self.scalediv = self.convert_menu_scale(scale)
         self.max_colours = colours
         self.convert_menu_dither(dither)
         self.optimize_from_menu(optimize)
         self.convert_menu_loops(loops)
+        self.output_dir = output
+
+    def set_prefix_from_path(self, full_path):
+        base = os.path.basename(full_path)           
+        name, _ = os.path.splitext(base)             
+        self.prefix = name
 
     def set_input_file(self):
         input_file = ui.filedialog.askopenfilename()
@@ -104,7 +110,8 @@ class Model:
     def list_input_files(self):
         if not self.input_dir:
             return []
-        return [f for f in os.listdir(self.input_dir)
+        return [os.path.join(self.input_dir, f)
+                for f in os.listdir(self.input_dir)
                 if f.lower().endswith(('.mov', '.mp4'))]
 
     def set_output_dir(self):
@@ -119,9 +126,9 @@ class Model:
         else:
             self.output_filename = self.prefix # Need to decide on output name overwrite etc
 
-    def concatenate_singlefile(self):
+    def concatenate_singlefile(self, file):
         self.set_output_filename(self.prefix)
-        self.ff_cmdstr = (f'ffmpeg -i {self.input_file} ' 
+        self.ff_cmdstr = (f'ffmpeg -i {file} ' 
                           f'-vf "fps={self.fps},scale=iw/{self.scalediv}:ih/{self.scalediv}:flags=lanczos,'
                           f'split[s0][s1];'
                           f'[s0]palettegen=max_colors={self.max_colours}:stats_mode={self.stats_mode}[p];'
@@ -134,13 +141,14 @@ class Model:
     def concetenate_wholedir(self):
         pass
 
-    def concatenate_cmdstr(self):
+    def concatenate_cmdstr(self, file):
         # add if to choose single or directory
-        self.concatenate_singlefile()
+        self.concatenate_singlefile(file)
         pass
 
-    def run_ffmpeg_cmdstr(self):
-        self.concatenate_cmdstr()
+    def run_ffmpeg_cmdstr(self, file):
+        self.set_prefix_from_path(file)
+        self.concatenate_cmdstr(file)
         os.system(self.ff_cmdstr)
         print(f'generating gif')
         pass
@@ -169,12 +177,18 @@ class Control:
         self.model = model
 
     def find_file_location(self):
-        model.set_input_file()
-        print(f'the input file is located at {model.input_file}')
-        pass
+        self.model.set_input_file()
+        self.view.single_file_btn.configure(fg_color='#DBDBDB',text_color='grey3')
+        self.view.folder_btn.configure(fg_color='grey3',text_color='grey70')
+
+    def find_folder_location(self):
+        self.model.set_input_dir()
+        self.view.folder_btn.configure(fg_color='#DBDBDB',text_color='grey3')
+        self.view.single_file_btn.configure(fg_color='grey3',text_color='grey70')
+
 
     def set_save_location(self):
-        model.set_output_dir()
+        self.model.set_output_dir()
         self.view.output_input.delete(0,'end')
         self.view.output_input.insert(0, self.model.output_dir)
         self.view.output_input.xview('end')
@@ -185,10 +199,14 @@ class Control:
                                  colours=self.view.max_dd.get(),
                                  dither=self.view.dith_dd.get(),
                                  optimize=self.view.opt_dd.get(),
-                                 loops=self.view.loop_dd.get())
-                                 
-        model.run_ffmpeg_cmdstr()
-        pass
+                                 loops=self.view.loop_dd.get(),
+                                 output=self.view.output_input.get())
+        
+        if self.model.input_file and self.model.output_dir:                        
+            model.run_ffmpeg_cmdstr(self.model.input_file)
+        elif self.model.input_dir_files and self.model.output_dir:
+            for file in self.model.input_dir_files:
+                model.run_ffmpeg_cmdstr(file)
 
 
 class View(ui.CTk): 
@@ -264,7 +282,7 @@ class View(ui.CTk):
         self.single_file_btn = self.btn(125,40,"Single File",20,10, self.control.find_file_location ,self.input_area)
         self.single_file_btn.bind('<Enter>', self.single_help)
         self.single_file_btn.bind('<Leave>', self.overview_help)
-        self.folder_btn = self.btn(125,40,"Folder",155,10,None,self.input_area)
+        self.folder_btn = self.btn(125,40,"Folder",155,10, self.control.find_folder_location ,self.input_area)
         self.folder_btn.bind('<Enter>', self.folder_help)
         self.folder_btn.bind('<Leave>', self.overview_help)
 
