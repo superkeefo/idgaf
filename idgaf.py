@@ -204,11 +204,11 @@ class View(ui.CTk):
         # Set output
         self.output_text = self.menu_text("Select save location:",20,415,self)
         self.output_text.configure(font = ('Roboto Bold', 16))
-        self.output_area = self.area(600, 500, 0, 440, self)
+        self.output_area = self.area(600, 150, 0, 440, self)
         self.output_input = self.input(260, 35, 20, 10, self.output_area)
         self.output_input.configure(justify='left')
         self.output_btn = self.btn(260, 40, "Set Output Folder", 20, 55, self.control.set_save_location, self.output_area)
-        self.makegif_btn = self.btn(260, 80, "Generate Gif(s)!", 20, 115, self.control.generate_gif, self.output_area)
+        self.makegif_btn = self.btn(260, 80, "Generate Gif(s)!", 20, 555, self.control.generate_gif, self)
         self.makegif_btn.configure(fg_color="#DBDBDB", text_color='black', hover_color="#FFFFFF")
         self.output_area.bind('<Enter>', self.output_help)
         self.output_text.bind('<Enter>', self.output_help)
@@ -217,7 +217,7 @@ class View(ui.CTk):
         self.output_area.bind('<Leave>', self.overview_help)
 
         # Overview 
-        self.overviewlabel = self.menu_text("Show Overview ◨", 170, 203, self.output_area)
+        self.overviewlabel = self.menu_text("Show Overview ◨", 170, 642, self)
         self.overviewlabel.configure(font=('Roboto', 14), text_color="#7D7D7D", cursor="hand2")
         self.overviewlabel.bind("<Button-1>", self.overview_toggle)
 
@@ -295,11 +295,11 @@ class View(ui.CTk):
         if current == "300x675":
             self.geometry("600x675")
             self.overviewlabel.configure(text='Hide Overview ◧')
-            self.overviewlabel.place(x=475, y=203)
+            self.overviewlabel.place(x=475, y=642)
         else:
             self.geometry("300x675")
             self.overviewlabel.configure(text='Show Overview ◨')
-            self.overviewlabel.place(x=170, y=203)
+            self.overviewlabel.place(x=170, y=642)
     
     def overview_help(self, event):
         self.overview_helptext.configure(text=
