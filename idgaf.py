@@ -202,11 +202,44 @@ class Control:
                                  loops=self.view.loop_dd.get(),
                                  output=self.view.output_input.get())
         
-        if self.model.input_file and self.model.output_dir:                        
-            model.run_ffmpeg_cmdstr(self.model.input_file)
-        elif self.model.input_dir_files and self.model.output_dir:
+        # if self.model.input_file and self.model.output_dir:                        
+        #     model.run_ffmpeg_cmdstr(self.model.input_file)
+        # elif self.model.input_dir_files and self.model.output_dir:
+        #     for file in self.model.input_dir_files:
+        #         model.run_ffmpeg_cmdstr(file)
+        # self.view.flash_green()
+
+            # Check output directory
+        if not self.model.output_dir or not os.path.exists(self.model.output_dir):
+            print("Output directory does not exist!")
+            self.view.flash_red()
+            return
+
+        # Check single file mode
+        if self.model.input_file:
+            if not os.path.exists(self.model.input_file):
+                print(f"Input file {self.model.input_file} does not exist!")
+                self.view.flash_red()
+                return
+            self.model.run_ffmpeg_cmdstr(self.model.input_file)
+        # Check directory mode
+        elif self.model.input_dir_files:
+            if len(self.model.input_dir_files) == 0:
+                print("No input files found in the selected directory!")
+                self.view.flash_red()
+                return
             for file in self.model.input_dir_files:
-                model.run_ffmpeg_cmdstr(file)
+                if not os.path.exists(file):
+                    print(f"Input file {file} does not exist!")
+                    continue
+                self.model.run_ffmpeg_cmdstr(file)
+        else:
+            print("No input file or directory selected!")
+            self.view.flash_red()
+            return
+
+        self.view.flash_green()
+
 
 
 class View(ui.CTk): 
@@ -374,6 +407,16 @@ class View(ui.CTk):
                                  dynamic_resizing=False)
         menu.place(x=set_x, y=set_y)
         return menu
+    
+    def flash_green(self):
+        original_color = self.makegif_btn.cget("fg_color")
+        self.makegif_btn.configure(fg_color="#72e572")
+        self.after(1000, lambda: self.makegif_btn.configure(fg_color=original_color))
+
+    def flash_red(self):
+        original_color = self.makegif_btn.cget("fg_color")
+        self.makegif_btn.configure(fg_color="#d30000")
+        self.after(1000, lambda: self.makegif_btn.configure(fg_color=original_color))
     
     def overview_toggle(self, event):
         current = self.geometry().split("+")[0]
