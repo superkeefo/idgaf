@@ -5,16 +5,14 @@ import customtkinter as ui
 
 class Model:
     def __init__(self):
-        self.troubleshoot = True
+        self.setstamp = True
         self.input_dir = None
         self.input_dir_files = None
         self.input_file = None
         self.output_dir = None
         self.ff_cmdstr = None
         self.dithername = None
-        self.single = False
-        self.multi = False
-        self.prefix = "Placeholder"
+        self.prefix = "noname"
 
         ### GIF SETTING OPTIONS ###
         self.loop_list = ['Yes','No']
@@ -33,19 +31,9 @@ class Model:
                                    'sierra2_4a',            # 7 Highest size
                                    'none']                  # 8 ugly
 
-        ### GIF SETTINGS ###
-        self.fps = 12
-        self.scalediv = 1
-        self.max_colours = self.colours_list[3]
-        self.dither_method = self.dither_method_list[2]
-        self.stats_mode = self.stats_mode_list[1] 
-        self.diff_mode = self.diff_mode_list[0]
-        self.loops = 0
 
     def convert_menu_scale(self, menu_scale):
         value = float(menu_scale.strip('%'))
-        if value == 0:
-            raise ValueError("Percentage cannot be zero.")
         return 100.0 / value
     
     def convert_menu_dither(self, menu_dither):
@@ -120,7 +108,7 @@ class Model:
         self.output_dir = output_dir
 
     def set_output_filename(self, prefix):
-        if self.troubleshoot:
+        if self.setstamp:
             self.dithername_output()
             self.output_filename = (f'{prefix}_{self.fps}f'
                                     f'{self.max_colours}c{self.dithername}.gif')
